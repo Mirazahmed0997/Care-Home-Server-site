@@ -56,6 +56,8 @@ async function run() {
         const appointmentOptionsCollection = client.db('careHome').collection('appointmentOptions')
         const bookingCollections= client.db('careHome').collection('bookings')
         const userCollections= client.db('careHome').collection('users')
+        const DoctorCollections= client.db('careHome').collection('doctors')
+
         //user aggregate to query multiple collection and then merge data
         app.get('/appointmentOptions',async(req,res)=>
         {
@@ -136,7 +138,7 @@ async function run() {
           const user= await userCollections.findOne(query)
           if(user)
           {
-            const token=jwt.sign({email}, process.env.ACCESS_TOKEN, {expiresIn:'1h'})
+            const token=jwt.sign({email}, process.env.ACCESS_TOKEN, {expiresIn:'1d'})
             return res.send({accessToken:token})
           }
           console.log(user)
@@ -187,6 +189,38 @@ async function run() {
             }
           }
           const result= await userCollections.updateOne(filter,updatedDoc,options)
+          res.send(result)
+        })
+
+        // To add doctors catagory/speciality(this API using to get a particuler field from an database object)
+        app.get('/appointmentSpeciality',async(req,res)=>
+        {
+            const query={}
+            const result=await appointmentOptionsCollection.find(query).project({name:1}).toArray();
+            res.send(result)
+        })
+
+        // To get doctors data
+        app.get('/doctors',async(req,res)=>
+        {
+          const query={}
+          const doctors= await DoctorCollections.find(query).toArray()
+          res.send(doctors)
+        })
+
+        // add doctors API
+        app.post('/doctors',async(req,res)=>{
+          const doctor=req.body
+          const result=await DoctorCollections.insertOne(doctor)
+          res.send(result)
+        })
+
+        // To delete a specific doctors info
+        app.delete('/doctors/:id',async(req,res)=>
+        {
+          const id=req.params.id;
+          const filter={_id: new ObjectId(id)};
+          const result=await DoctorCollections.deleteOne(filter)
           res.send(result)
         })
 
